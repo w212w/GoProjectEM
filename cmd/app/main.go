@@ -53,7 +53,7 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/songs", handlers.GetSongsHandler).Methods("GET")
+	router.HandleFunc("/api/songs", handlers.GetSongsHandler(db)).Methods("GET")
 	router.HandleFunc("/api/songs/{id}/text", handlers.GetSongTextHandler).Methods("GET")
 	router.HandleFunc("/api/songs/{id}", handlers.DeleteSongHandler).Methods("DELETE")
 	router.HandleFunc("/api/songs/{id}", handlers.UpdateSongHandler).Methods("PUT")

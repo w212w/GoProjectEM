@@ -54,10 +54,10 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/songs", handlers.GetSongsHandler(db)).Methods("GET")
-	router.HandleFunc("/api/songs/{id}/text", handlers.GetSongTextHandler).Methods("GET")
-	router.HandleFunc("/api/songs/{id}", handlers.DeleteSongHandler).Methods("DELETE")
-	router.HandleFunc("/api/songs/{id}", handlers.UpdateSongHandler).Methods("PUT")
-	router.HandleFunc("/api/songs", handlers.AddSongHandler).Methods("POST")
+	router.HandleFunc("/api/songs/{id}/text", handlers.GetSongTextHandler(db)).Methods("GET")
+	router.HandleFunc("/api/songs/{id}", handlers.DeleteSongHandler(db)).Methods("DELETE")
+	router.HandleFunc("/api/songs/{id}", handlers.UpdateSongHandler(db)).Methods("PUT")
+	router.HandleFunc("/api/songs", handlers.AddSongHandler(db)).Methods("POST")
 
 	log.Println("Server running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))

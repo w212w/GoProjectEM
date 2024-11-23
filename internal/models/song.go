@@ -10,3 +10,10 @@ type Song struct {
 	Text        string `json:"text"`
 	Link        string `json:"link"`
 }
+
+type SongTextResponse struct {
+	TotalVerses int      `json:"total_verses"`
+	Page        int      `json:"page"`
+	Limit       int      `json:"limit"`
+	Verses      []string `json:"verses"`
+}

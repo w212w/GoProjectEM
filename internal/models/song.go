@@ -9,6 +9,7 @@ type Song struct {
 	ReleaseDate string `json:"release_date"`
 	Text        string `json:"text"`
 	Link        string `json:"link"`
+	Group       string `json:"group"`
 }
 
 type SongTextResponse struct {

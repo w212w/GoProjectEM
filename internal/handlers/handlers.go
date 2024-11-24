@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -168,6 +171,7 @@ func UpdateSongHandler(db *gorm.DB) http.HandlerFunc {
 		song.ReleaseDate = updatedData.ReleaseDate
 		song.Text = updatedData.Text
 		song.Link = updatedData.Link
+		song.Group = updatedData.Group
 
 		if err := db.Save(&song).Error; err != nil {
 			http.Error(w, "Failed to update song", http.StatusInternalServerError)
@@ -181,19 +185,69 @@ func UpdateSongHandler(db *gorm.DB) http.HandlerFunc {
 
 func AddSongHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var newSong models.Song
-		if err := json.NewDecoder(r.Body).Decode(&newSong); err != nil {
-			http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		type Input struct {
+			Group string `json:"group"`
+			Song  string `json:"song"`
+		}
+
+		// Parse JSON input
+		var input Input
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			http.Error(w, "Invalid input", http.StatusBadRequest)
 			return
 		}
 
-		if newSong.Artist == "" || newSong.Title == "" {
-			http.Error(w, "Artist and Title are required", http.StatusBadRequest)
+		// Build external API URL
+		baseURL := os.Getenv("EXTERNAL_API_BASE_URL")
+		if baseURL == "" {
+			http.Error(w, "External API base URL not configured", http.StatusInternalServerError)
 			return
+		}
+
+		url := fmt.Sprintf("%s/info?group=%s&song=%s", baseURL, input.Group, input.Song)
+
+		// Make the request to the external API
+		resp, err := http.Get(url)
+		if err != nil {
+			http.Error(w, "Failed to fetch song info", http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			http.Error(w, "External API returned an error", http.StatusInternalServerError)
+			return
+		}
+
+		// Parse API response
+		var apiResponse struct {
+			Artist      string `json:"artist"`
+			ReleaseDate string `json:"releaseDate"`
+			Text        string `json:"text"`
+			Link        string `json:"link"`
+		}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			http.Error(w, "Failed to read API response", http.StatusInternalServerError)
+			return
+		}
+
+		if err := json.Unmarshal(body, &apiResponse); err != nil {
+			http.Error(w, "Invalid API response format", http.StatusInternalServerError)
+			return
+		}
+
+		newSong := models.Song{
+			Group:       input.Group,
+			Title:       input.Song,
+			Artist:      apiResponse.Artist,
+			ReleaseDate: apiResponse.ReleaseDate,
+			Text:        apiResponse.Text,
+			Link:        apiResponse.Link,
 		}
 
 		if err := db.Create(&newSong).Error; err != nil {
-			http.Error(w, "Failed to add song", http.StatusInternalServerError)
+			http.Error(w, "Failed to save song", http.StatusInternalServerError)
 			return
 		}
 

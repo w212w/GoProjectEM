@@ -7,11 +7,14 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	httpSwagger "github.com/swaggo/http-swagger" // Для использования Swagger UI
+	_ "github.com/w212w/GoProjectEM/docs"        // Подключаем сгенерированные документы Swagger
 	"github.com/w212w/GoProjectEM/internal/handlers"
 	"github.com/w212w/GoProjectEM/internal/logger"
 	"github.com/w212w/GoProjectEM/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	// Для генерации Swagger документации
 )
 
 func loadEnv() {
@@ -61,6 +64,8 @@ func main() {
 	router.HandleFunc("/api/songs/{id}", handlers.DeleteSongHandler(db)).Methods("DELETE")
 	router.HandleFunc("/api/songs/{id}", handlers.UpdateSongHandler(db)).Methods("PUT")
 	router.HandleFunc("/api/songs", handlers.AddSongHandler(db)).Methods("POST")
+
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	logger.Log.Info("Server is running on :8080")
 	if err := http.ListenAndServe(":8080", router); err != nil {

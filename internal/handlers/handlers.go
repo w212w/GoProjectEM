@@ -15,6 +15,20 @@ import (
 	"gorm.io/gorm"
 )
 
+// GetSongsHandler godoc
+// @Summary Получить список песен
+// @Description Получить список песен с возможностью фильтрации по артисту и названию
+// @Tags songs
+// @Accept json
+// @Produce json
+// @Param artist query string false "Фильтр по артисту"
+// @Param title query string false "Фильтр по названию"
+// @Param page query int false "Номер страницы" default(1)
+// @Param limit query int false "Количество результатов на странице" default(10)
+// @Success 200 {array} models.Song "Список песен"
+// @Failure 400 {object} models.ErrorResponse "Неверные параметры"
+// @Failure 500 {object} models.ErrorResponse "Ошибка сервера"
+// @Router /songs [get]
 func GetSongsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Debug("GetSongsHandler: Start processing request")
@@ -70,6 +84,20 @@ func GetSongsHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
+// GetSongTextHandler godoc
+// @Summary Получить текст песни
+// @Description Получить текст песни по ее ID с возможностью пагинации по стихам
+// @Tags songs
+// @Accept json
+// @Produce json
+// @Param id path string true "ID песни"
+// @Param page query int false "Номер страницы" default(1)
+// @Param limit query int false "Количество стихов на странице" default(2)
+// @Success 200 {object} models.SongTextResponse "Текст песни с пагинацией"
+// @Failure 400 {object} models.ErrorResponse "Неверные параметры"
+// @Failure 404 {object} models.ErrorResponse "Песня не найдена"
+// @Failure 500 {object} models.ErrorResponse "Ошибка сервера"
+// @Router /songs/{id}/text [get]
 func GetSongTextHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Debug("GetSongTextHandler: Start processing request")
@@ -134,6 +162,18 @@ func GetSongTextHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
+// DeleteSongHandler godoc
+// @Summary Удалить песню
+// @Description Удалить песню по ее ID
+// @Tags songs
+// @Accept json
+// @Produce json
+// @Param id path string true "ID песни"
+// @Success 200 {string} string "Песня удалена успешно"
+// @Failure 400 {object} models.ErrorResponse "ID не указан"
+// @Failure 404 {object} models.ErrorResponse "Песня не найдена"
+// @Failure 500 {object} models.ErrorResponse "Ошибка сервера"
+// @Router /songs/{id} [delete]
 func DeleteSongHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Debug("DeleteSongHandler: Start processing request")
@@ -171,6 +211,19 @@ func DeleteSongHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
+// UpdateSongHandler godoc
+// @Summary Обновить информацию о песне
+// @Description Обновить песню по ее ID
+// @Tags songs
+// @Accept json
+// @Produce json
+// @Param id path string true "ID песни"
+// @Param song body models.Song true "Данные для обновления песни"
+// @Success 200 {string} string "Песня обновлена успешно"
+// @Failure 400 {object} models.ErrorResponse "Неверный формат JSON"
+// @Failure 404 {object} models.ErrorResponse "Песня не найдена"
+// @Failure 500 {object} models.ErrorResponse "Ошибка сервера"
+// @Router /songs/{id} [put]
 func UpdateSongHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Debug("UpdateSongHandler: Start processing request")
@@ -223,6 +276,17 @@ func UpdateSongHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
+// AddSongHandler godoc
+// @Summary Добавить песню
+// @Description Добавляет песню в базу данных, получая информацию о песне из внешнего API
+// @Tags songs
+// @Accept json
+// @Produce json
+// @Param song body models.AddSongRequest true "Данные для добавления песни"
+// @Success 201 {string} string "Песня успешно добавлена"
+// @Failure 400 {object} models.ErrorResponse "Неверный формат данных"
+// @Failure 500 {object} models.ErrorResponse "Ошибка при обработке запроса"
+// @Router /songs [post]
 func AddSongHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Infof("Received request to add song from %s", r.RemoteAddr)

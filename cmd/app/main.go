@@ -2,26 +2,48 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"github.com/w212w/GoProjectEM/internal/handlers"
 	"github.com/w212w/GoProjectEM/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+var Log = logrus.New()
+
+func setupLogger() {
+
+	levelStr := os.Getenv("LOG_LEVEL")
+	if levelStr == "" {
+		levelStr = "info"
+	}
+
+	level, err := logrus.ParseLevel(levelStr)
+	if err != nil {
+		Log.Fatalf("Неверный уровень логирования: %v", err)
+	}
+	Log.SetLevel(level)
+
+	Log.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+	})
+	Log.Debug("Logrus успешно инициализирован")
+}
+
 func loadEnv() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env")
+		Log.Fatal("Ошибка загрузки .env файла")
+	} else {
+		Log.Debug("Файл .env успешно загружен")
 	}
 }
 
 func setupDatabase() *gorm.DB {
-	loadEnv()
 
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
@@ -35,7 +57,7 @@ func setupDatabase() *gorm.DB {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Failed to connect to the database:", err)
+		Log.Fatal("Failed to connect to the database:", err)
 	}
 
 	return db
@@ -43,13 +65,15 @@ func setupDatabase() *gorm.DB {
 
 func main() {
 
+	loadEnv()
+	setupLogger()
 	db := setupDatabase()
-	fmt.Println("Connected to database")
+	Log.Info("Connected to database")
 
 	if err := db.AutoMigrate(&models.Song{}); err != nil {
-		log.Fatal("Migartion failed:", err)
+		Log.Fatal("Migartion failed:", err)
 	}
-	fmt.Println("Table created successfully")
+	Log.Debug("Table created successfully")
 
 	router := mux.NewRouter()
 
@@ -59,6 +83,8 @@ func main() {
 	router.HandleFunc("/api/songs/{id}", handlers.UpdateSongHandler(db)).Methods("PUT")
 	router.HandleFunc("/api/songs", handlers.AddSongHandler(db)).Methods("POST")
 
-	log.Println("Server running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	Log.Info("Server is running on :8080")
+	if err := http.ListenAndServe(":8080", router); err != nil {
+		Log.Fatalf("Error running server: %v", err)
+	}
 }

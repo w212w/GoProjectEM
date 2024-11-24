@@ -10,12 +10,15 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/w212w/GoProjectEM/internal/logger"
 	"github.com/w212w/GoProjectEM/internal/models"
 	"gorm.io/gorm"
 )
 
 func GetSongsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Log.Debug("GetSongsHandler: Start processing request")
+
 		artist := r.URL.Query().Get("artist")
 		title := r.URL.Query().Get("title")
 		pageStr := r.URL.Query().Get("page")
@@ -35,6 +38,8 @@ func GetSongsHandler(db *gorm.DB) http.HandlerFunc {
 			}
 		}
 
+		logger.Log.Debugf("GetSongsHandler: Parameters received - artist: %s, title: %s, page: %d, limit: %d", artist, title, page, limit)
+
 		var songs []models.Song
 		query := db.Model(&models.Song{})
 
@@ -47,26 +52,36 @@ func GetSongsHandler(db *gorm.DB) http.HandlerFunc {
 
 		offset := (page - 1) * limit
 		if err := query.Offset(offset).Limit(limit).Find(&songs).Error; err != nil {
+			logger.Log.Error("GetSongsHandler: Failed to retrieve songs")
 			http.Error(w, "Failed to retrieve songs", http.StatusInternalServerError)
 			return
 		}
 
+		logger.Log.Debug("GetSongsHandler: Songs retrieved successfully")
+
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(songs); err != nil {
+			logger.Log.Error("GetSongsHandler: Failed to encode response")
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			return
 		}
+
+		logger.Log.Info("GetSongsHandler: Successfully responded with songs")
 	}
 }
 
 func GetSongTextHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Log.Debug("GetSongTextHandler: Start processing request")
 
 		vars := mux.Vars(r)
 		id := vars["id"]
 
+		logger.Log.Debugf("GetSongTextHandler: Song ID received: %s", id)
+
 		var song models.Song
 		if err := db.First(&song, id).Error; err != nil {
+			logger.Log.Error("GetSongTextHandler: Song not found")
 			if err == gorm.ErrRecordNotFound {
 				http.Error(w, "Song not found", http.StatusNotFound)
 			} else {
@@ -91,6 +106,7 @@ func GetSongTextHandler(db *gorm.DB) http.HandlerFunc {
 		start := (page - 1) * limit
 		end := start + limit
 		if start > totalVerses {
+			logger.Log.Error("GetSongTextHandler: Page out of range")
 			http.Error(w, "Page out of range", http.StatusBadRequest)
 			return
 		}
@@ -105,23 +121,36 @@ func GetSongTextHandler(db *gorm.DB) http.HandlerFunc {
 			Verses:      verses[start:end],
 		}
 
+		logger.Log.Debug("GetSongTextHandler: Response prepared successfully")
+
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			logger.Log.Error("GetSongTextHandler: Failed to encode response")
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			return
+		}
+
+		logger.Log.Info("GetSongTextHandler: Successfully responded with song text")
 	}
 }
 
 func DeleteSongHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Log.Debug("DeleteSongHandler: Start processing request")
 		vars := mux.Vars(r)
 		id := vars["id"]
 
+		logger.Log.Debugf("DeleteSongHandler: Song ID received: %s", id)
+
 		if id == "" {
+			logger.Log.Error("DeleteSongHandler: ID is required")
 			http.Error(w, "ID is required", http.StatusBadRequest)
 			return
 		}
 
 		var song models.Song
 		if err := db.First(&song, "id = ?", id).Error; err != nil {
+			logger.Log.Error("DeleteSongHandler: Song not found")
 			if err == gorm.ErrRecordNotFound {
 				http.Error(w, "Song not found", http.StatusNotFound)
 			} else {
@@ -131,10 +160,12 @@ func DeleteSongHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		if err := db.Delete(&song).Error; err != nil {
+			logger.Log.Error("DeleteSongHandler: Failed to delete song")
 			http.Error(w, "Failed to delete song", http.StatusInternalServerError)
 			return
 		}
 
+		logger.Log.Info("DeleteSongHandler: Song deleted successfully")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Song deleted successfully"))
 	}
@@ -142,16 +173,22 @@ func DeleteSongHandler(db *gorm.DB) http.HandlerFunc {
 
 func UpdateSongHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Log.Debug("UpdateSongHandler: Start processing request")
+
 		vars := mux.Vars(r)
 		id := vars["id"]
 
+		logger.Log.Debugf("UpdateSongHandler: Song ID received: %s", id)
+
 		if id == "" {
+			logger.Log.Error("UpdateSongHandler: ID is required")
 			http.Error(w, "ID is required", http.StatusBadRequest)
 			return
 		}
 
 		var song models.Song
 		if err := db.First(&song, "id = ?", id).Error; err != nil {
+			logger.Log.Error("UpdateSongHandler: Song not found")
 			if err == gorm.ErrRecordNotFound {
 				http.Error(w, "Song not found", http.StatusNotFound)
 			} else {
@@ -162,6 +199,7 @@ func UpdateSongHandler(db *gorm.DB) http.HandlerFunc {
 
 		var updatedData models.Song
 		if err := json.NewDecoder(r.Body).Decode(&updatedData); err != nil {
+			logger.Log.Error("UpdateSongHandler: Invalid JSON format")
 			http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 			return
 		}
@@ -174,10 +212,12 @@ func UpdateSongHandler(db *gorm.DB) http.HandlerFunc {
 		song.Group = updatedData.Group
 
 		if err := db.Save(&song).Error; err != nil {
+			logger.Log.Error("UpdateSongHandler: Failed to update song")
 			http.Error(w, "Failed to update song", http.StatusInternalServerError)
 			return
 		}
 
+		logger.Log.Info("UpdateSongHandler: Song updated successfully")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Song updated successfully"))
 	}
@@ -185,41 +225,44 @@ func UpdateSongHandler(db *gorm.DB) http.HandlerFunc {
 
 func AddSongHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Log.Infof("Received request to add song from %s", r.RemoteAddr)
+
 		type Input struct {
 			Group string `json:"group"`
 			Song  string `json:"song"`
 		}
 
-		// Parse JSON input
 		var input Input
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			logger.Log.Errorf("Invalid input: %v", err)
 			http.Error(w, "Invalid input", http.StatusBadRequest)
 			return
 		}
+		logger.Log.Infof("Parsed input: group=%s, song=%s", input.Group, input.Song)
 
-		// Build external API URL
 		baseURL := os.Getenv("EXTERNAL_API_BASE_URL")
 		if baseURL == "" {
+			logger.Log.Error("External API base URL not configured")
 			http.Error(w, "External API base URL not configured", http.StatusInternalServerError)
 			return
 		}
-
 		url := fmt.Sprintf("%s/info?group=%s&song=%s", baseURL, input.Group, input.Song)
+		logger.Log.Infof("Making request to external API: %s", url)
 
-		// Make the request to the external API
 		resp, err := http.Get(url)
 		if err != nil {
+			logger.Log.Errorf("Failed to fetch song info: %v", err)
 			http.Error(w, "Failed to fetch song info", http.StatusInternalServerError)
 			return
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
+			logger.Log.Errorf("External API returned an error: %s", resp.Status)
 			http.Error(w, "External API returned an error", http.StatusInternalServerError)
 			return
 		}
 
-		// Parse API response
 		var apiResponse struct {
 			Artist      string `json:"artist"`
 			ReleaseDate string `json:"releaseDate"`
@@ -228,11 +271,13 @@ func AddSongHandler(db *gorm.DB) http.HandlerFunc {
 		}
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
+			logger.Log.Errorf("Failed to read API response: %v", err)
 			http.Error(w, "Failed to read API response", http.StatusInternalServerError)
 			return
 		}
 
 		if err := json.Unmarshal(body, &apiResponse); err != nil {
+			logger.Log.Errorf("Invalid API response format: %v", err)
 			http.Error(w, "Invalid API response format", http.StatusInternalServerError)
 			return
 		}
@@ -247,9 +292,12 @@ func AddSongHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		if err := db.Create(&newSong).Error; err != nil {
+			logger.Log.Errorf("Failed to save song to database: %v", err)
 			http.Error(w, "Failed to save song", http.StatusInternalServerError)
 			return
 		}
+
+		logger.Log.Infof("Song added successfully: %s by %s", input.Song, input.Group)
 
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte("Song added successfully"))

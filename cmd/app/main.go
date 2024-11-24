@@ -7,39 +7,18 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
 	"github.com/w212w/GoProjectEM/internal/handlers"
+	"github.com/w212w/GoProjectEM/internal/logger"
 	"github.com/w212w/GoProjectEM/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-var Log = logrus.New()
-
-func setupLogger() {
-
-	levelStr := os.Getenv("LOG_LEVEL")
-	if levelStr == "" {
-		levelStr = "info"
-	}
-
-	level, err := logrus.ParseLevel(levelStr)
-	if err != nil {
-		Log.Fatalf("Неверный уровень логирования: %v", err)
-	}
-	Log.SetLevel(level)
-
-	Log.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: true,
-	})
-	Log.Debug("Logrus успешно инициализирован")
-}
-
 func loadEnv() {
 	if err := godotenv.Load(); err != nil {
-		Log.Fatal("Ошибка загрузки .env файла")
+		logger.Log.Fatal("Ошибка загрузки .env файла")
 	} else {
-		Log.Debug("Файл .env успешно загружен")
+		logger.Log.Debug("Файл .env успешно загружен")
 	}
 }
 
@@ -57,7 +36,7 @@ func setupDatabase() *gorm.DB {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		Log.Fatal("Failed to connect to the database:", err)
+		logger.Log.Fatal("Failed to connect to the database:", err)
 	}
 
 	return db
@@ -66,14 +45,14 @@ func setupDatabase() *gorm.DB {
 func main() {
 
 	loadEnv()
-	setupLogger()
+	logger.SetupLogger()
 	db := setupDatabase()
-	Log.Info("Connected to database")
+	logger.Log.Info("Connected to database")
 
 	if err := db.AutoMigrate(&models.Song{}); err != nil {
-		Log.Fatal("Migartion failed:", err)
+		logger.Log.Fatal("Migartion failed:", err)
 	}
-	Log.Debug("Table created successfully")
+	logger.Log.Debug("Table created successfully")
 
 	router := mux.NewRouter()
 
@@ -83,8 +62,8 @@ func main() {
 	router.HandleFunc("/api/songs/{id}", handlers.UpdateSongHandler(db)).Methods("PUT")
 	router.HandleFunc("/api/songs", handlers.AddSongHandler(db)).Methods("POST")
 
-	Log.Info("Server is running on :8080")
+	logger.Log.Info("Server is running on :8080")
 	if err := http.ListenAndServe(":8080", router); err != nil {
-		Log.Fatalf("Error running server: %v", err)
+		logger.Log.Fatalf("Error running server: %v", err)
 	}
 }

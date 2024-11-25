@@ -8,10 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Log - это глобальный экземпляр логера
 var Log = logrus.New()
 
-// SetupLogger настраивает логгер с уровнем логирования из переменной окружения.
 func SetupLogger() {
 	levelStr := os.Getenv("LOG_LEVEL")
 	if levelStr == "" {

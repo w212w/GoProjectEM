@@ -1,8 +1,8 @@
-basePath: /
+basePath: /api/v1
 host: localhost:8080
 info:
   contact: {}
-  description: API для управления песнями.
+  description: API для управления песнями
   title: Song API
   version: "1.0"
 paths: {}

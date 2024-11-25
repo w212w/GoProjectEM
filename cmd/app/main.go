@@ -18,9 +18,9 @@ import (
 
 // @title Song API
 // @version 1.0
-// @description API для управления песнями.
+// @description API для управления песнями
 // @host localhost:8080
-// @BasePath /
+// @BasePath  /api/v1
 
 func loadEnv() {
 	if err := godotenv.Load(); err != nil {

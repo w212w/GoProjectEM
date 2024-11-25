@@ -28,7 +28,7 @@ import (
 // @Success 200 {array} models.Song "Список песен"
 // @Failure 400 {object} models.ErrorResponse "Неверные параметры"
 // @Failure 500 {object} models.ErrorResponse "Ошибка сервера"
-// @Router /songs [get]
+// @Router /api/songs [get]
 func GetSongsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Debug("GetSongsHandler: Start processing request")

@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "github.com/w212w/GoProjectEM/cmd/app/docs"
+	_ "github.com/w212w/GoProjectEM/docs"
 	"github.com/w212w/GoProjectEM/internal/handlers"
 	"github.com/w212w/GoProjectEM/internal/logger"
 	"github.com/w212w/GoProjectEM/internal/models"

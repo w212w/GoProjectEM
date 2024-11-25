@@ -1,0 +1,251 @@
+basePath: /api/v1
+definitions:
+  models.AddSongRequest:
+    properties:
+      artist:
+        type: string
+      text:
+        type: string
+      title:
+        type: string
+    type: object
+  models.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  models.Song:
+    description: Структура для описания песни
+    properties:
+      artist:
+        type: string
+      created_at:
+        type: string
+      group:
+        type: string
+      id:
+        type: integer
+      link:
+        type: string
+      release_date:
+        type: string
+      text:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.SongTextResponse:
+    description: Структура для ответа на запрос получения текста песни
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total_verses:
+        type: integer
+      verses:
+        items:
+          type: string
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API для управления песнями
+  title: Song API
+  version: "1.0"
+paths:
+  /api/songs:
+    get:
+      consumes:
+      - application/json
+      description: Получить список песен с возможностью фильтрации по артисту и названию
+      parameters:
+      - description: Фильтр по артисту
+        in: query
+        name: artist
+        type: string
+      - description: Фильтр по названию
+        in: query
+        name: title
+        type: string
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Количество результатов на странице
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список песен
+          schema:
+            items:
+              $ref: '#/definitions/models.Song'
+            type: array
+        "400":
+          description: Неверные параметры
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить список песен
+      tags:
+      - songs
+  /songs:
+    post:
+      consumes:
+      - application/json
+      description: Добавляет песню в базу данных, получая информацию о песне из внешнего
+        API
+      parameters:
+      - description: Данные для добавления песни
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/models.AddSongRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Песня успешно добавлена
+          schema:
+            type: string
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Ошибка при обработке запроса
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Добавить песню
+      tags:
+      - songs
+  /songs/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удалить песню по ее ID
+      parameters:
+      - description: ID песни
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Песня удалена успешно
+          schema:
+            type: string
+        "400":
+          description: ID не указан
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Песня не найдена
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Удалить песню
+      tags:
+      - songs
+    put:
+      consumes:
+      - application/json
+      description: Обновить песню по ее ID
+      parameters:
+      - description: ID песни
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Данные для обновления песни
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/models.Song'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Песня обновлена успешно
+          schema:
+            type: string
+        "400":
+          description: Неверный формат JSON
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Песня не найдена
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Обновить информацию о песне
+      tags:
+      - songs
+  /songs/{id}/text:
+    get:
+      consumes:
+      - application/json
+      description: Получить текст песни по ее ID с возможностью пагинации по стихам
+      parameters:
+      - description: ID песни
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 2
+        description: Количество стихов на странице
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Текст песни с пагинацией
+          schema:
+            $ref: '#/definitions/models.SongTextResponse'
+        "400":
+          description: Неверные параметры
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Песня не найдена
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить текст песни
+      tags:
+      - songs
+swagger: "2.0"

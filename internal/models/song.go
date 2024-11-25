@@ -1,7 +1,5 @@
 package models
 
-import "gorm.io/gorm"
-
 // Song модель для песни
 // @Description Структура для описания песни
 // @Properties:
@@ -9,15 +7,17 @@ import "gorm.io/gorm"
 //   created_at: string "Дата создания"
 //   updated_at: string "Дата последнего обновления"
 //   artist: string "Имя артиста"
-//   song: string "Название песни"
+//   title: string "Название песни"
 //   release_date: string "Дата релиза"
 //   text: string "Текст песни"
 //   link: string "Ссылка на песню"
 //   group: string "Группа, к которой принадлежит песня"
 type Song struct {
-	gorm.Model
+	ID          uint   `json:"id"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 	Artist      string `json:"artist"`
-	Title       string `json:"song"`
+	Title       string `json:"title"`
 	ReleaseDate string `json:"release_date"`
 	Text        string `json:"text"`
 	Link        string `json:"link"`
@@ -36,4 +36,15 @@ type SongTextResponse struct {
 	Page        int      `json:"page"`
 	Limit       int      `json:"limit"`
 	Verses      []string `json:"verses"`
+}
+
+type ErrorResponse struct {
+	Message string `json:"message"`
+	Code    int    `json:"code"`
+}
+
+type AddSongRequest struct {
+	Title  string `json:"title"`
+	Artist string `json:"artist"`
+	Text   string `json:"text"`
 }

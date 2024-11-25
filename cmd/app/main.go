@@ -7,15 +7,20 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	httpSwagger "github.com/swaggo/http-swagger" // Для использования Swagger UI
-	_ "github.com/w212w/GoProjectEM/docs"        // Подключаем сгенерированные документы Swagger
+	httpSwagger "github.com/swaggo/http-swagger"
+	_ "github.com/w212w/GoProjectEM/cmd/app/docs"
 	"github.com/w212w/GoProjectEM/internal/handlers"
 	"github.com/w212w/GoProjectEM/internal/logger"
 	"github.com/w212w/GoProjectEM/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	// Для генерации Swagger документации
 )
+
+// @title Song API
+// @version 1.0
+// @description API для управления песнями.
+// @host localhost:8080
+// @BasePath /
 
 func loadEnv() {
 	if err := godotenv.Load(); err != nil {
